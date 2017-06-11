@@ -69,7 +69,7 @@ func (t *SimpleChaincode) Init(stub shim.ChaincodeStubInterface, function string
 	if err != nil {
 		return nil, err
 	}
-
+	stub.PutState("c",[]byte(strconv.Itoa(80)))
 	return nil, nil
 }
 

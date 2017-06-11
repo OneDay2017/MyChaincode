@@ -90,6 +90,9 @@ func (t *SimpleChaincode) Invoke(stub shim.ChaincodeStubInterface, function stri
 		// Deletes an entity from its state
 		return t.delete(stub, args)
 	}
+	if function == "add" {
+		return t.add(stub,args)
+	}
 
 	var A, B string    // Entities
 	var Aval, Bval int // Asset holdings

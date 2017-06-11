@@ -32,23 +32,12 @@ import (
 
 // SimpleChaincode example simple Chaincode implementation
 type SimpleChaincode struct {
-	maxNum int
-	count int
+
 }
 
 func (t *SimpleChaincode) Init(stub shim.ChaincodeStubInterface, function string, args []string) ([]byte, error) {
-	var max int
-	var err error
-	if len(args)!=1 {
-		return nil, errors.New("Incorrect number of arguments. Expecting 4")
-	}
-	max,err=strconv.Atoi(args[0])
-	if err!=nil {
-		return nil, errors.New("Expecting integer value for asset holding")
-	}
-	t.maxNum=max
-	t.count=0
-	/*var A, B string    // Entities
+
+	var A, B string    // Entities
 	var Aval, Bval int // Asset holdings
 	var err error
 
@@ -79,7 +68,7 @@ func (t *SimpleChaincode) Init(stub shim.ChaincodeStubInterface, function string
 	err = stub.PutState(B, []byte(strconv.Itoa(Bval)))
 	if err != nil {
 		return nil, err
-	}*/
+	}
 
 	return nil, nil
 }
@@ -170,9 +159,7 @@ func (t *SimpleChaincode) add(stub shim.ChaincodeStubInterface,args []string) ([
 	if len(args) !=2 {
 		return nil, errors.New("Incorrect number of arguments. Expecting 2")
 	}
-	if t.count==t.maxNum {
-		return nil, errors.New("Failed to add state")
-	}
+
 	var A string
 	var Aval int
 	var err error
@@ -185,7 +172,7 @@ func (t *SimpleChaincode) add(stub shim.ChaincodeStubInterface,args []string) ([
 	if err!=nil {
 		return nil, errors.New("Failed to add state")
 	}
-	t.count=t.count+1
+
 	return nil,nil
 }
 // Query callback representing the query of a chaincode

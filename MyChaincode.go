@@ -30,184 +30,223 @@ import (
 	"github.com/hyperledger/fabric/core/chaincode/shim"
 )
 
-// SimpleChaincode example simple Chaincode implementation
-type SimpleChaincode struct {
+type VoteChaincode struct{
 
 }
 
-func (t *SimpleChaincode) Init(stub shim.ChaincodeStubInterface, function string, args []string) ([]byte, error) {
 
-	var A, B string    // Entities
-	var Aval, Bval int // Asset holdings
-	var err error
-
-	if len(args) != 4 {
-		return nil, errors.New("Incorrect number of arguments. Expecting 4")
-	}
-
-	// Initialize the chaincode
-	A = args[0]
-	Aval, err = strconv.Atoi(args[1])
-	if err != nil {
-		return nil, errors.New("Expecting integer value for asset holding")
-	}
-
-	B = args[2]
-	Bval, err = strconv.Atoi(args[3])
-	if err != nil {
-		return nil, errors.New("Expecting integer value for asset holding")
-	}
-	fmt.Printf("Aval = %d, Bval = %d\n", Aval, Bval)
-
-	// Write the state to the ledger
-	err = stub.PutState(A, []byte(strconv.Itoa(Aval)))
-	if err != nil {
-		return nil, err
-	}
-
-	err = stub.PutState(B, []byte(strconv.Itoa(Bval)))
-	if err != nil {
-		return nil, err
-	}
-	stub.PutState("c",[]byte(strconv.Itoa(80)))
-	return nil, nil
-}
-
-// Transaction makes payment of X units from A to B
-func (t *SimpleChaincode) Invoke(stub shim.ChaincodeStubInterface, function string, args []string) ([]byte, error) {
-	if function == "delete" {
-		// Deletes an entity from its state
-		return t.delete(stub, args)
-	}
-	if function == "add" {
-		return t.add(stub,args)
-	}
-
-	var A, B string    // Entities
-	var Aval, Bval int // Asset holdings
-	var X int          // Transaction value
-	var err error
-
-	if len(args) != 3 {
-		return nil, errors.New("Incorrect number of arguments. Expecting 3")
-	}
-
-	A = args[0]
-	B = args[1]
-
-	// Get the state from the ledger
-	// TODO: will be nice to have a GetAllState call to ledger
-	Avalbytes, err := stub.GetState(A)
-	if err != nil {
-		return nil, errors.New("Failed to get state")
-	}
-	if Avalbytes == nil {
-		return nil, errors.New("Entity not found")
-	}
-	Aval, _ = strconv.Atoi(string(Avalbytes))
-
-	Bvalbytes, err := stub.GetState(B)
-	if err != nil {
-		return nil, errors.New("Failed to get state")
-	}
-	if Bvalbytes == nil {
-		return nil, errors.New("Entity not found")
-	}
-	Bval, _ = strconv.Atoi(string(Bvalbytes))
-
-	// Perform the execution
-	X, err = strconv.Atoi(args[2])
-	if err != nil {
-		return nil, errors.New("Invalid transaction amount, expecting a integer value")
-	}
-	Aval = Aval - X
-	Bval = Bval + X
-	fmt.Printf("Aval = %d, Bval = %d\n", Aval, Bval)
-
-	// Write the state back to the ledger
-	err = stub.PutState(A, []byte(strconv.Itoa(Aval)))
-	if err != nil {
-		return nil, err
-	}
-
-	err = stub.PutState(B, []byte(strconv.Itoa(Bval)))
-	if err != nil {
-		return nil, err
-	}
-
-	return nil, nil
-}
-
-// Deletes an entity from state
-func (t *SimpleChaincode) delete(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
-	if len(args) != 1 {
+func (t *VoteChaincode) Init(stub shim.ChaincodeStubInterface,function string,args []string) ([]byte,error) {
+	if len(args)!=1 {
 		return nil, errors.New("Incorrect number of arguments. Expecting 1")
 	}
-
-	A := args[0]
-
-	// Delete the key from the state in ledger
-	err := stub.DelState(A)
-	if err != nil {
-		return nil, errors.New("Failed to delete state")
-	}
-
-	return nil, nil
-}
-
-func (t *SimpleChaincode) add(stub shim.ChaincodeStubInterface,args []string) ([]byte,error){
-	if len(args) !=2 {
-		return nil, errors.New("Incorrect number of arguments. Expecting 2")
-	}
-
-	var A string
-	var Aval int
+	var maxCount int
 	var err error
-	A=args[0]
-	Aval,err=strconv.Atoi(args[1])
+	maxCount,err=strconv.Atoi(args[0])
 	if err!=nil {
 		return nil, errors.New("Invalid transaction amount, expecting a integer value")
 	}
-	err=stub.PutState(A,[]byte(strconv.Itoa(Aval)))
+	err=stub.PutState("max",[]byte(strconv.Itoa(maxCount)))
 	if err!=nil {
-		return nil, errors.New("Failed to add state")
+		return nil,err
 	}
+	/*err = stub.CreateTable("Candidate", []*shim.ColumnDefinition{
+		&shim.ColumnDefinition{Name: "Id", Type: shim.ColumnDefinition_STRING, Key: true},
+		&shim.ColumnDefinition{Name: "Name", Type: shim.ColumnDefinition_STRING, Key: false},
+	})
+	if err!=nil {
+		return nil, errors.New("Failed creating Candidate table.")
+	}
+	err = stub.CreateTable("Vote", []*shim.ColumnDefinition{
+		&shim.ColumnDefinition{Name: "Id", Type: shim.ColumnDefinition_STRING, Key: true},
+		&shim.ColumnDefinition{Name: "VId", Type: shim.ColumnDefinition_STRING, Key: true},
+		&shim.ColumnDefinition{Name:"Time",Type: shim.ColumnDefinition_STRING,Key:false},
+	})
+	if err!=nil {
+		return nil, errors.New("Failed creating Vote table.")
+	}*/
 
 	return nil,nil
 }
-// Query callback representing the query of a chaincode
-func (t *SimpleChaincode) Query(stub shim.ChaincodeStubInterface, function string, args []string) ([]byte, error) {
-	if function != "query" {
-		return nil, errors.New("Invalid query function name. Expecting \"query\"")
+
+func (t *VoteChaincode) Invoke(stub shim.ChaincodeStubInterface,function string,args []string) ([]byte,error){
+
+	if function=="addCandidate" {
+		return t.addCandidate(stub,args)
 	}
-	var A string // Entities
+	if function=="vote" {
+		return t.vote(stub,args)
+
+	}
+	return nil,nil
+}
+
+func (t *VoteChaincode) addCandidate(stub shim.ChaincodeStubInterface,args []string) ([]byte,error) {
+	if len(args) !=2 {
+		return nil, errors.New("Incorrect number of arguments. Expecting 2")
+	}
+	var Id string
+	var Name string
 	var err error
-
-	if len(args) != 1 {
-		return nil, errors.New("Incorrect number of arguments. Expecting name of the person to query")
-	}
-
-	A = args[0]
-
-	// Get the state from the ledger
-	Avalbytes, err := stub.GetState(A)
-	if err != nil {
-		jsonResp := "{\"Error\":\"Failed to get state for " + A + "\"}"
+	Id=args[0]
+	Name=args[1]
+	_,err=stub.GetState(Id)
+	if err==nil {
+		jsonResp := "{\"Error\":\"Failed to get state for " + Name + "\"}"
 		return nil, errors.New(jsonResp)
 	}
-
-	if Avalbytes == nil {
-		jsonResp := "{\"Error\":\"Nil amount for " + A + "\"}"
+	err=stub.PutState(Id,[]byte(strconv.Itoa(0)))
+	if err!=nil {
+		return nil,err
+	}
+	var ok bool
+	ok,err=stub.InsertRow("Candidate",shim.Row{
+		Columns: []*shim.Column{
+			&shim.Column{Value: &shim.Column_String_{String_: Id}},
+			&shim.Column{Value: &shim.Column_String_{String_: Name}},
+			},
+	})
+	if !ok {
+		stub.DelState(Id)
+		jsonResp := "{\"Error\":\"Failed to get state for " + Name + "\"}"
 		return nil, errors.New(jsonResp)
 	}
+	return nil,nil
+}
 
-	jsonResp := "{\"Name\":\"" + A + "\",\"Amount\":\"" + string(Avalbytes) + "\"}"
+func (t *VoteChaincode) vote(stub shim.ChaincodeStubInterface,args []string) ([]byte,error) {
+	//CId,VId,time
+	if len(args)!=3 {
+		return nil, errors.New("Incorrect number of arguments. Expecting 3")
+	}
+	var CId string
+	var VId string
+	var time string
+	var CountByte []byte
+	var count int
+	var err error
+	CId=args[0]
+	VId=args[1]
+	time=args[2]
+	CountByte,err=stub.GetState(VId)
+	//no vote
+	if err!=nil {
+		count=0
+
+	} else {
+		count,err=strconv.Atoi(string(CountByte))
+		if err!=nil {
+			return nil,err
+		}
+
+	}
+	var maxbyte []byte
+	maxbyte,err=stub.GetState("max")
+	var max int
+	max,err=strconv.Atoi(string(maxbyte))
+	if count==max {
+		return nil, errors.New("Can not vote")
+	}
+	count=count+1
+
+	var ok bool
+	ok,err=stub.InsertRow("",shim.Row{
+		Columns: []*shim.Column{
+			&shim.Column{Value: &shim.Column_String_{String_: CId}},
+			&shim.Column{Value: &shim.Column_String_{String_: VId}},
+			&shim.Column{Value: &shim.Column_String_{String_: time}},
+		},
+	})
+	if !ok {
+		return nil, err
+	}
+	err=stub.PutState(VId,[]byte(strconv.Itoa(count)))
+	if err!=nil {
+		return nil,err
+	}
+
+	var CCount int
+	var CCountByte []byte
+	CCountByte,err=stub.GetState(CId)
+	if err!=nil {
+		return nil,errors.New("No this Candidate")
+	}
+
+	CCount,_=strconv.Atoi(string(CCountByte))
+	CCount=CCount+1
+	err=stub.PutState(CId,[]byte(strconv.Itoa(CCount)))
+
+
+	return nil,nil
+}
+
+
+
+func (t *VoteChaincode) Query(stub shim.ChaincodeStubInterface,function string,args []string) ([]byte,error){
+	if function=="candidate" {
+
+	} else if function=="total" {
+
+	} else if function=="votenum" {
+
+	}
+	return nil, errors.New("Invalid query function name.")
+}
+
+func (t *VoteChaincode) CandidateQuery(stub shim.ChaincodeStubInterface,args []string) ([]byte,error){
+	if len(args)!=1 {
+		return nil, errors.New("Incorrect number of arguments. Expecting 2")
+	}
+	var CId string
+	var err error
+	var countByte []byte
+	CId=args[0]
+	countByte,err=stub.GetState(CId)
+	if err!=nil {
+		jsonResp := "{\"Error\":\"Failed to get state for " + CId+ "\"}"
+		return nil, errors.New(jsonResp)
+	}
+	if countByte==nil {
+		jsonResp := "{\"Error\":\"Nil amount for " + CId + "\"}"
+		return nil, errors.New(jsonResp)
+	}
+	jsonResp := "{\"Name\":\"" + CId+ "\",\"Amount\":\"" + string(countByte) + "\"}"
 	fmt.Printf("Query Response:%s\n", jsonResp)
-	return Avalbytes, nil
+	return countByte, nil
+}
+
+func (t *VoteChaincode) TotalQuery(stub shim.ChaincodeStubInterface, function string, args []string) ([]byte,error){
+	var columns []shim.Column
+	col1 := shim.Column{Value: &shim.Column_String_{String_: ""}}
+	columns = append(columns, col1)
+	rows, err := stub.GetRows("AssetsOwnership", columns)
+	if err != nil {
+		return nil, fmt.Errorf("Failed retrieving asset [%s]", err)
+	}
+	var resp string
+	resp=""
+	for row:=range rows {
+		fmt.Println(row)
+		resp=resp+" "+string(row.Columns[1].GetBytes())
+		if len(rows)<=0 {
+			break;
+		}
+	}
+	return []byte(resp),nil
+
+
+}
+
+func (t *VoteChaincode) VoteNum(stub shim.ChaincodeStubInterface, function string, args []string) ([]byte,error){
+	if len(args)!=0 {
+		return nil, errors.New("Incorrect number of arguments. Expecting 0")
+	}
+	maxByte,_:=stub.GetState("max")
+
+	return maxByte,nil
 }
 
 func main() {
-	err := shim.Start(new(SimpleChaincode))
+	err := shim.Start(new(VoteChaincode))
 	if err != nil {
 		fmt.Printf("Error starting Simple chaincode: %s", err)
 	}

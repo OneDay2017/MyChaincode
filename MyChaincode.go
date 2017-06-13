@@ -183,11 +183,12 @@ func (t *VoteChaincode) vote(stub shim.ChaincodeStubInterface,args []string) ([]
 
 func (t *VoteChaincode) Query(stub shim.ChaincodeStubInterface,function string,args []string) ([]byte,error){
 	if function=="candidate" {
+		return t.CandidateQuery(stub,args)
 
 	} else if function=="total" {
-
+		return t.TotalQuery(stub,args)
 	} else if function=="votenum" {
-
+		return t.VoteNum(stub,args)
 	}
 	return nil, errors.New("Invalid query function name.")
 }
@@ -214,7 +215,7 @@ func (t *VoteChaincode) CandidateQuery(stub shim.ChaincodeStubInterface,args []s
 	return countByte, nil
 }
 
-func (t *VoteChaincode) TotalQuery(stub shim.ChaincodeStubInterface, function string, args []string) ([]byte,error){
+func (t *VoteChaincode) TotalQuery(stub shim.ChaincodeStubInterface,  args []string) ([]byte,error){
 	var columns []shim.Column
 	col1 := shim.Column{Value: &shim.Column_String_{String_: ""}}
 	columns = append(columns, col1)
@@ -232,11 +233,9 @@ func (t *VoteChaincode) TotalQuery(stub shim.ChaincodeStubInterface, function st
 		}
 	}
 	return []byte(resp),nil
-
-
 }
 
-func (t *VoteChaincode) VoteNum(stub shim.ChaincodeStubInterface, function string, args []string) ([]byte,error){
+func (t *VoteChaincode) VoteNum(stub shim.ChaincodeStubInterface, args []string) ([]byte,error){
 	if len(args)!=0 {
 		return nil, errors.New("Incorrect number of arguments. Expecting 0")
 	}

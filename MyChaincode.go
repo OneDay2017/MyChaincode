@@ -81,6 +81,7 @@ func (t *VoteChaincode) Invoke(stub shim.ChaincodeStubInterface,function string,
 }
 
 func (t *VoteChaincode) addCandidate(stub shim.ChaincodeStubInterface,args []string) ([]byte,error) {
+	return nil, errors.New("Incorrect number of arguments. Expecting 2")
 	if len(args) !=2 {
 		return nil, errors.New("Incorrect number of arguments. Expecting 2")
 	}

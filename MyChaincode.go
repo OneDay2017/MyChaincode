@@ -71,17 +71,18 @@ func (t *VoteChaincode) Init(stub shim.ChaincodeStubInterface,function string,ar
 func (t *VoteChaincode) Invoke(stub shim.ChaincodeStubInterface,function string,args []string) ([]byte,error){
 
 	if function=="addCandidate" {
+		stub.PutState("123",[]byte("0"))
 		return t.addCandidate(stub,args)
 	}
 	if function=="vote" {
 		return t.vote(stub,args)
 
 	}
-	return nil, errors.New("Failed Invoke.")
+	return nil, errors.New("Invalid query function name.")
 }
 
 func (t *VoteChaincode) addCandidate(stub shim.ChaincodeStubInterface,args []string) ([]byte,error) {
-	return nil, errors.New("Incorrect number of arguments. Expecting 2")
+
 	if len(args) !=2 {
 		return nil, errors.New("Incorrect number of arguments. Expecting 2")
 	}

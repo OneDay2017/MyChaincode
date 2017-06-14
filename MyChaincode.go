@@ -49,7 +49,7 @@ func (t *VoteChaincode) Init(stub shim.ChaincodeStubInterface,function string,ar
 	if err!=nil {
 		return nil,err
 	}
-	/*err = stub.CreateTable("Candidate", []*shim.ColumnDefinition{
+	err = stub.CreateTable("Candidate", []*shim.ColumnDefinition{
 		&shim.ColumnDefinition{Name: "Id", Type: shim.ColumnDefinition_STRING, Key: true},
 		&shim.ColumnDefinition{Name: "Name", Type: shim.ColumnDefinition_STRING, Key: false},
 	})
@@ -63,7 +63,7 @@ func (t *VoteChaincode) Init(stub shim.ChaincodeStubInterface,function string,ar
 	})
 	if err!=nil {
 		return nil, errors.New("Failed creating Vote table.")
-	}*/
+	}
 
 	return nil,nil
 }
@@ -91,7 +91,7 @@ func (t *VoteChaincode) addCandidate(stub shim.ChaincodeStubInterface,args []str
 	Name=args[1]
 	_,err=stub.GetState(Id)
 	if err==nil {
-		jsonResp := "{\"Error\":\"Failed to get state for " + Name + "\"}"
+		jsonResp := "{\"Error\":\"Failed to add candidate for " + Name + "\"}"
 		return nil, errors.New(jsonResp)
 	}
 	err=stub.PutState(Id,[]byte(strconv.Itoa(0)))
@@ -107,7 +107,7 @@ func (t *VoteChaincode) addCandidate(stub shim.ChaincodeStubInterface,args []str
 	})
 	if !ok {
 		stub.DelState(Id)
-		jsonResp := "{\"Error\":\"Failed to get state for " + Name + "\"}"
+		jsonResp := "{\"Error\":\"Failed to add candidate for " + Name + "\"}"
 		return nil, errors.New(jsonResp)
 	}
 	return nil,nil
@@ -189,13 +189,15 @@ func (t *VoteChaincode) Query(stub shim.ChaincodeStubInterface,function string,a
 		return t.TotalQuery(stub,args)
 	} else if function=="votenum" {
 		return t.VoteNum(stub,args)
+	} else if function=="voter" {
+		return t.Voter(stub,args)
 	}
 	return nil, errors.New("Invalid query function name.")
 }
 
 func (t *VoteChaincode) CandidateQuery(stub shim.ChaincodeStubInterface,args []string) ([]byte,error){
 	if len(args)!=1 {
-		return nil, errors.New("Incorrect number of arguments. Expecting 2")
+		return nil, errors.New("Incorrect number of arguments. Expecting 1")
 	}
 	var CId string
 	var err error
@@ -214,12 +216,39 @@ func (t *VoteChaincode) CandidateQuery(stub shim.ChaincodeStubInterface,args []s
 	fmt.Printf("Query Response:%s\n", jsonResp)
 	return countByte, nil
 }
+func (t *VoteChaincode) Voter(stub shim.ChaincodeStubInterface,args []string) ([]byte,error){
+	if len(args)!=1 {
+		return nil, errors.New("Incorrect number of arguments. Expecting 1")
+	}
+	VId:=args[0]
 
-func (t *VoteChaincode) TotalQuery(stub shim.ChaincodeStubInterface,  args []string) ([]byte,error){
 	var columns []shim.Column
-	col1 := shim.Column{Value: &shim.Column_String_{String_: ""}}
+	col1 := shim.Column{Value: &shim.Column_String_{String_: VId}}
 	columns = append(columns, col1)
-	rows, err := stub.GetRows("AssetsOwnership", columns)
+	rows, err := stub.GetRows("vote", columns)
+	if err != nil {
+		return nil, fmt.Errorf("Failed retrieving asset [%s]", err)
+	}
+	var resp string
+	resp=""
+	for row:=range rows {
+		fmt.Println(row)
+		resp=resp+" "+string(row.Columns[0].GetBytes())
+		if len(rows)<=0 {
+			break;
+		}
+	}
+	return []byte(resp),nil
+}
+func (t *VoteChaincode) TotalQuery(stub shim.ChaincodeStubInterface,  args []string) ([]byte,error){
+	if len(args)!=1 {
+		return nil, errors.New("Incorrect number of arguments. Expecting 1")
+	}
+	CId:=args[0]
+	var columns []shim.Column
+	col1 := shim.Column{Value: &shim.Column_String_{String_: CId}}
+	columns = append(columns, col1)
+	rows, err := stub.GetRows("vote", columns)
 	if err != nil {
 		return nil, fmt.Errorf("Failed retrieving asset [%s]", err)
 	}

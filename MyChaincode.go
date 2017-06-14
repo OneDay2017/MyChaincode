@@ -77,7 +77,7 @@ func (t *VoteChaincode) Invoke(stub shim.ChaincodeStubInterface,function string,
 		return t.vote(stub,args)
 
 	}
-	return nil,nil
+	return nil, errors.New("Failed Invoke.")
 }
 
 func (t *VoteChaincode) addCandidate(stub shim.ChaincodeStubInterface,args []string) ([]byte,error) {

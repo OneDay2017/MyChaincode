@@ -87,10 +87,15 @@ func (t *VoteChaincode) addCandidate(stub shim.ChaincodeStubInterface,args []str
 	var Id string
 	var Name string
 	var err error
+	var  countByte []byte
 	Id=args[0]
 	Name=args[1]
-	_,err=stub.GetState(Id)
+	countByte,err=stub.GetState(Id)
 	if err==nil {
+		jsonResp := "{\"Error\":\"Failed to add candidate for " + Name + "\"}"
+		return nil, errors.New(jsonResp)
+	}
+	if countByte!=nil {
 		jsonResp := "{\"Error\":\"Failed to add candidate for " + Name + "\"}"
 		return nil, errors.New(jsonResp)
 	}
@@ -98,7 +103,7 @@ func (t *VoteChaincode) addCandidate(stub shim.ChaincodeStubInterface,args []str
 	if err!=nil {
 		return nil,err
 	}
-	var ok bool
+	/*var ok bool
 	ok,err=stub.InsertRow("Candidate",shim.Row{
 		Columns: []*shim.Column{
 			&shim.Column{Value: &shim.Column_String_{String_: Id}},
@@ -109,7 +114,7 @@ func (t *VoteChaincode) addCandidate(stub shim.ChaincodeStubInterface,args []str
 		stub.DelState(Id)
 		jsonResp := "{\"Error\":\"Failed to add candidate for " + Name + "\"}"
 		return nil, errors.New(jsonResp)
-	}
+	}*/
 	return nil,nil
 }
 
